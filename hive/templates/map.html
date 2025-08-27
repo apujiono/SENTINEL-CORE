@@ -9,27 +9,35 @@
 <body>
   <div id="map"></div>
   <script>
-    const map = L.map('map').setView([31.5, 34.5], 6); // Palestina
+    const map = L.map('map').setView([20, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Tambahkan Gaza
+    // Gaza
     L.marker([31.5, 34.5]).addTo(map)
-      .bindPopup("Gaza — Under Attack")
+      .bindPopup("🇵🇸 Gaza — Under Attack")
       .openPopup();
 
-    // Tambahkan Jakarta
+    // Jakarta
     L.marker([-6.2, 106.8]).addTo(map)
-      .bindPopup("Jakarta — Anti-Corruption Ops");
+      .bindPopup("🇮🇩 Jakarta — Anti-Corruption Ops");
 
-    // Update dari API
-    setInterval(() => {
+    // Update sightings
+    function updateSightings() {
       fetch('/api/sightings').then(r => r.json()).then(sightings => {
+        map.eachLayer(l => { if (l.options?.sentinel) map.removeLayer(l); });
         sightings.forEach(s => {
-          L.marker([Math.random()*5+30, Math.random()*5+34]).addTo(map)
-            .bindPopup(`🚨 ${s.target} terlihat`);
+          const lat = parseFloat(s.lat) || (Math.random() * 2 + 31.4);
+          const lng = parseFloat(s.lng) || (Math.random() * 2 + 34.4);
+          const marker = L.marker([lat, lng], {
+            icon: L.divIcon({ className: 'custom', html: '🔴', sentinel: true })
+          }).addTo(map);
+          marker.bindPopup(`<b>📍 ${s.target}</b><br>${s.location}`);
         });
       });
-    }, 30000);
+    }
+
+    setInterval(updateSightings, 30000);
+    updateSightings();
   </script>
 </body>
 </html>
