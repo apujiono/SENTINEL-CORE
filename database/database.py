@@ -47,7 +47,6 @@ class SentinelDB:
                 status TEXT,
                 risk TEXT,
                 action TEXT,
-                claimed BOOLEAN DEFAULT 0,
                 timestamp TEXT
             )
         ''')
@@ -74,13 +73,6 @@ class SentinelDB:
     def get_sightings(self, limit=20):
         cursor = self.conn.execute("SELECT * FROM sightings ORDER BY timestamp DESC LIMIT ?", (limit,))
         return [dict(zip([c[0] for c in cursor.description], row)) for row in cursor.fetchall()]
-
-    def add_truth(self, data):
-        self.conn.execute(
-            "INSERT INTO truth_vault (title, category, ipfs_hash, uploaded, metadata) VALUES (?, ?, ?, ?, ?)",
-            (data['title'], data['category'], data['ipfs_hash'], data['uploaded'], json.dumps(data.get('metadata', {})))
-        )
-        self.conn.commit()
 
     def add_zombie(self, data):
         self.conn.execute(
