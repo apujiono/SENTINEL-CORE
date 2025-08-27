@@ -2,15 +2,8 @@
 from flask import Flask, render_template, jsonify, request
 import os
 import subprocess
-import sqlite3
-from datetime import datetime
-
-# Import lokal
-try:
-    from database.database import SentinelDB
-    from retaliation.retaliation_kit import RetaliationKit
-except:
-    pass
+from database.database import SentinelDB
+from retaliation.cyberwar_engine import CyberWarEngine
 
 app = Flask(__name__)
 db = SentinelDB()
@@ -28,12 +21,6 @@ def dashboard():
         sightings=db.get_sightings(5),
         zombies=db.get_zombies(5)
     )
-
-@app.route('/map')
-def map():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
-    return render_template('map.html', sightings=db.get_sightings(20))
 
 @app.route('/alert', methods=['POST'])
 def receive_alert():
@@ -90,17 +77,9 @@ def api_retaliate():
     attacker_ip = request.json.get('ip')
     if not attacker_ip:
         return jsonify({"status": "error", "msg": "IP tidak diberikan"})
-    # Di dunia nyata: jalankan RetaliationKit(attacker_ip).execute()
-    return jsonify({"status": "retaliation_started", "target": attacker_ip})
-
-@app.route('/api/status')
-def api_status():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
-    return jsonify({
-        "total_alerts": len(db.get_alerts(1000)),
-        "version": "vΩ"
-    })
+    engine = CyberWarEngine(attacker_ip)
+    engine.execute()
+    return jsonify({"status": "cyber_war_launched", "target": attacker_ip})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
