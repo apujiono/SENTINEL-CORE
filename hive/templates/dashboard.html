@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>The Watcher</title>
+  <title>The Watcher vΩ</title>
   <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
 </head>
 <body>
   <div class="container">
     <h1>👁️‍🗨️ The Watcher — Sentinel Core vΩ</h1>
-    <p><b>Alerts:</b> {{ alerts|length }} | <b>Sightings:</b> {{ sightings|length }}</p>
+    <p><b>Agents:</b> {{ agent_count }} | 
+       <b>Alerts:</b> {{ alerts|length }} | 
+       <b>Sightings:</b> {{ sightings|length }}</p>
 
     <h3>🚨 Terkini</h3>
     <div class="alerts">
       {% for a in alerts[::-1][:10] %}
       <div class="alert-item">
-        <b>[{{ a.node }}]</b> {{ a.alert }}
-        <span class="time">{{ a.time }}</span>
+        <b>[{{ a.get('node', 'unknown') }}]</b> {{ a.get('alert', 'No message') }}
+        <span class="time">{{ a.get('time', 'now') }}</span>
       </div>
       {% endfor %}
     </div>
@@ -23,12 +26,25 @@
     <div class="sightings">
       {% for s in sightings[::-1][:5] %}
       <div class="alert-item">
-        <b>Target:</b> {{ s.target }} di {{ s.location }}
+        <b>Target:</b> {{ s.get('target', 'Unknown') }} di {{ s.get('location', 'Unknown') }}
+        <span class="time">{{ s.get('time', 'now') }}</span>
       </div>
       {% endfor %}
     </div>
 
-    <a href="/map?key={{ request.args.get('key') }}">🌍 Buka Peta Ancaman</a>
+    <h3>📦 Truth Vault</h3>
+    <div class="truth">
+      {% for t in truth_vault[::-1][:3] %}
+      <div class="alert-item">
+        <b>{{ t.get('title', 'Untitled') }}</b> ({{ t.get('category', 'unknown') }})
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="actions">
+      <a href="/map?key={{ request.args.get('key') }}">🌍 Peta Ancaman</a> |
+      <a href="/">🔄 Refresh</a>
+    </div>
   </div>
 </body>
 </html>
