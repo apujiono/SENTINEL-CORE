@@ -3,3 +3,4 @@ psutil
 requests
 paho-mqtt
 gunicorn
+numpy
