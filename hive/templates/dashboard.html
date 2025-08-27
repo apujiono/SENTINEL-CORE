@@ -2,32 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>⚔️ CYBER WAR COMMAND</title>
-  <style>
-    body { font-family: 'Courier New', monospace; background: #000 url('/static/assets/bg-grid.png') repeat; color: #0f0; }
-    .panel { background: rgba(0,30,0,0.7); border: 1px solid #0f0; padding: 15px; border-radius: 8px; }
-    button { background: #001100; color: #0f0; border: 1px solid #0f0; padding: 8px 12px; margin: 5px 0; cursor: pointer; }
-    button.danger { background: #300; border-color: #f00; }
-    input { width: 100%; background: #001100; color: #0f0; border: 1px solid #0f0; padding: 8px; }
-  </style>
-  <script>
-    function launchCyberWar() {
-      const ip = document.getElementById('target-ip').value;
-      if (!ip) { alert("Masukkan IP!"); return; }
-      fetch('/api/retaliate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: ip, key: 'watcher123' })
-      }).then(() => alert('⚔️ Operasi dimulai!'));
-    }
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>👁️ THE OMNISCIENT DASHBOARD</title>
+  <link rel="stylesheet" href="/static/css/cyber-ui.css" />
+  <script src="/static/js/commander.js" defer></script>
 </head>
 <body>
-  <h1>SENTINEL CORE vΩ</h1>
-  <div class="panel">
-    <h2>⚔️ CYBER WAR ENGINE</h2>
-    <input type="text" id="target-ip" placeholder="Masukkan IP Musuh" />
-    <button onclick="launchCyberWar()" class="danger">🚀 LEPASKAN SENJATA</button>
+  <div class="grid-bg"></div>
+
+  <!-- Header -->
+  <header class="neon-header">
+    <h1>SENTINEL CORE vΩ</h1>
+    <p>THE WATCHER • <span id="status">ONLINE</span></p>
+  </header>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+    <!-- Peta Global -->
+    <div class="panel map-panel">
+      <h2>🌍 GLOBAL THREAT MAP</h2>
+      <div id="map"></div>
+    </div>
+
+    <!-- Agent Control -->
+    <div class="panel agent-panel">
+      <h2>🤖 AGENT CONTROL</h2>
+      <select id="agent-select" onchange="loadAgentDetails()">
+        <option value="">Pilih Agent</option>
+      </select>
+      <div id="agent-details"></div>
+      <button onclick="sendCommand('ping')">📡 Ping</button>
+      <button onclick="sendCommand('restart')">🔄 Restart</button>
+      <button onclick="sendCommand('update')">🆙 Update</button>
+      <button onclick="sendCommand('self-destruct')" class="danger">💀 Self-Destruct</button>
+    </div>
+
+    <!-- Zombie Hunter -->
+    <div class="panel zombie-panel">
+      <h2>🧟 ZOMBIE HUNTER v2</h2>
+      <input type="text" id="keyword" placeholder="Cari: palestine, korupsi, dll" value="palestine" />
+      <button onclick="scanZombie()" class="primary">🔍 SCAN ZOMBIE DOMAINS</button>
+      <div id="zombie-results"></div>
+    </div>
+
+    <!-- Truth Vault -->
+    <div class="panel vault-panel">
+      <h2>📦 TRUTH VAULT</h2>
+      <button onclick="openVault()">🔓 Buka Brankas</button>
+      <ul id="vault-list"></ul>
+    </div>
+
+    <!-- Amplify Engine -->
+    <div class="panel amplify-panel">
+      <h2>📢 AMPLIFY ENGINE</h2>
+      <textarea id="amplify-msg" placeholder="Pesan untuk disebar..."></textarea>
+      <div class="amplify-buttons">
+        <button onclick="amplifyTo('twitter')">🐦 Twitter</button>
+        <button onclick="amplifyTo('telegram')">📱 Telegram</button>
+        <button onclick="amplifyTo('ipfs')">🔗 IPFS</button>
+      </div>
+    </div>
+
+    <!-- Intel Feed -->
+    <div class="panel intel-panel">
+      <h2>🕵️‍♂️ INTEL FEED</h2>
+      <div id="intel-feed">
+        <p>Menunggu data...</p>
+      </div>
+    </div>
+
+    <!-- Retaliation Panel -->
+    <div class="panel retaliate-panel">
+      <h2>⚔️ BALAS SERANGAN (GREYHAT)</h2>
+      <input type="text" id="retaliate-ip" placeholder="IP Penyerang" />
+      <button onclick="retaliate()" class="danger">💥 SERANG BALIK</button>
+      <div id="war-log"></div>
+    </div>
+
+    <!-- Dead Man's Switch -->
+    <div class="panel switch-panel">
+      <h2>⚰️ DEAD MAN'S SWITCH</h2>
+      <p>Aktifkan jika kamu berisiko ditangkap atau dibungkam.</p>
+      <button onclick="activateSwitch()" class="danger">💥 AKTIFKAN</button>
+    </div>
+  </div>
+
+  <!-- Modal: Dead Man's Switch -->
+  <div id="switch-modal" class="modal">
+    <div class="modal-content">
+      <h2>🚨 DEAD MAN'S SWITCH</h2>
+      <p>Aktifkan? Jika kamu tidak aktif 24 jam, semua bukti akan bocor otomatis.</p>
+      <button onclick="confirmSwitch()" class="danger">✅ YA, AKTIFKAN</button>
+      <button onclick="closeModal()">Batal</button>
+    </div>
   </div>
 </body>
 </html>
