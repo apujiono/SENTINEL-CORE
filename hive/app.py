@@ -1,37 +1,34 @@
 # hive/app.py
 from flask import Flask, render_template, jsonify, request
 import os
+import subprocess
+import re
 import json
 from datetime import datetime, timedelta
-import requests
-from urllib.parse import urlparse
-import re
-import subprocess
 
 app = Flask(__name__)
 
-# 🔹 DATA SIMULASI (di dunia nyata: ganti dengan database)
+# 🔹 Data global
 alerts = []
 sightings = []
 agents = [
-    {"id": "agent-jkt-01", "ip": "192.168.1.10", "location": "Jakarta", "online": True, "dsi": 92, "role": "scanner", "last_seen": "2025-08-27T14:30:00"},
-    {"id": "agent-gz-01", "ip": "45.123.7.1", "location": "Gaza", "online": True, "dsi": 78, "role": "whistleblower", "last_seen": "2025-08-27T14:28:00"}
+    {"id": "agent-jkt-01", "ip": "192.168.1.10", "location": "Jakarta", "online": True, "dsi": 92, "role": "scanner"},
+    {"id": "agent-gz-01", "ip": "45.123.7.1", "location": "Gaza", "online": True, "dsi": 78, "role": "whistleblower"}
 ]
 truth_vault = []
-zombie_domains = []
+zombie_results = []
 intel_feed = [
-    {"type": "phishing", "message": "Deteksi: bit.ly/free-palestine palsu", "time": "14:25"},
+    {"type": "phishing", "message": "bit.ly/free-palestine palsu", "time": "14:25"},
     {"type": "disinfo", "message": "Hoax: 'Hamas menyerang warga sipil'", "time": "14:20"}
 ]
 deadman_active = False
-amplify_history = []
 
-# 🔐 Cek token akses
+# 🔐 Autentikasi
 def check_auth():
-    token = request.args.get('key') or request.json.get('key')
+    token = request.args.get('key') or (request.json.get('key') if request.is_json else None)
     return token == os.getenv('DASH_KEY', 'watcher123')
 
-# 🏠 Dashboard Utama
+# 🏠 Dashboard
 @app.route('/')
 def dashboard():
     if not check_auth():
@@ -41,18 +38,18 @@ def dashboard():
         sightings=sightings,
         agents=agents,
         truth_vault=truth_vault,
-        zombie_domains=zombie_domains,
+        zombie_results=zombie_results,
         deadman_active=deadman_active
     )
 
-# 🌍 Peta Ancaman
+# 🌍 Peta
 @app.route('/map')
 def map():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     return render_template('map.html', sightings=sightings)
 
-# 🚨 Terima alert dari agent
+# 🚨 Terima alert
 @app.route('/alert', methods=['POST'])
 def receive_alert():
     if not check_auth():
@@ -60,10 +57,9 @@ def receive_alert():
     data = request.json
     data['time'] = datetime.now().strftime("%H:%M:%S")
     alerts.append(data)
-    print(f"🚨 ALERT: {data}")
     return jsonify({"status": "ok"})
 
-# 📍 Tambah sighting (pantau orang/CCTV)
+# 📍 Sighting
 @app.route('/sighting', methods=['POST'])
 def receive_sighting():
     if not check_auth():
@@ -71,7 +67,6 @@ def receive_sighting():
     data = request.json
     data['time'] = datetime.now().isoformat()
     sightings.append(data)
-    print(f"📌 SIGHTING: {data}")
     return jsonify({"status": "recorded"})
 
 # 🤖 Daftar agent
@@ -87,11 +82,8 @@ def api_command():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     data = request.json
-    cmd = data.get('command')
-    agent_id = data.get('agent_id')
-    print(f"⚙️ Perintah ke {agent_id}: {cmd}")
-    # Di dunia nyata: kirim via MQTT atau encrypted channel
-    return jsonify({"status": "command_sent", "agent": agent_id, "command": cmd})
+    print(f"⚙️ Perintah ke {data['agent_id']}: {data['command']}")
+    return jsonify({"status": "command_sent"})
 
 # 🧟 Cari zombie domain
 @app.route('/api/zombie/scan', methods=['POST'])
@@ -99,14 +91,13 @@ def scan_zombie():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
 
-    target = request.json.get('keyword', 'palestine')
+    keyword = request.json.get('keyword', 'palestine')
     results = []
 
-    # 1. Cari domain dengan kata kunci
-    domains = generate_domains(target)
+    # Generate domain
+    domains = generate_domains(keyword)
     for domain in domains:
         try:
-            # 2. Cek apakah domain expired
             if is_domain_expired(domain):
                 results.append({
                     "domain": domain,
@@ -115,7 +106,6 @@ def scan_zombie():
                     "action": "register_or_takeover"
                 })
             else:
-                # 3. Cek subdomain takeover
                 subdomains = [f"www.{domain}", f"admin.{domain}", f"blog.{domain}"]
                 for sub in subdomains:
                     if check_subdomain_takeover(sub):
@@ -128,17 +118,18 @@ def scan_zombie():
         except:
             pass
 
-    # Simpan hasil
     global zombie_results
     zombie_results = results
     return jsonify(results)
 
+# 🧟 Hasil zombie
 @app.route('/api/zombie/results')
 def get_zombie_results():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     return jsonify(zombie_results)
 
+# 🧟 Ambil alih zombie
 @app.route('/api/zombie/takeover', methods=['POST'])
 def takeover_zombie():
     if not check_auth():
@@ -148,24 +139,22 @@ def takeover_zombie():
     action = request.json.get('action')
 
     if "subdomain-takeover" in action:
-        # Di dunia nyata: klaim subdomain di layanan cloud
         return jsonify({
             "status": "claimed",
             "domain": domain,
-            "message": "Subdomain berhasil diambil alih. Agent mini dikirim."
+            "message": "✅ Subdomain berhasil diambil alih. Agent mini dikirim."
         })
 
     elif "expired" in action:
         return jsonify({
             "status": "register_suggested",
             "domain": domain,
-            "message": "Domain ini expired. Daftar sekarang untuk jadikan agent."
+            "message": "⚠️ Domain expired. Daftar sekarang untuk jadikan agent."
         })
 
     return jsonify({"status": "unknown"})
 
-    return jsonify({"status": "unknown"})
-# 📦 Simpan bukti di Truth Vault
+# 📦 Simpan bukti
 @app.route('/api/truth', methods=['POST'])
 def api_truth():
     if not check_auth():
@@ -173,28 +162,18 @@ def api_truth():
     data = request.json
     data['uploaded'] = datetime.now().isoformat()
     truth_vault.append(data)
-    print(f"✅ Bukti disimpan: {data.get('title')}")
-    return jsonify({"status": "archived", "hash": f"truth-{len(truth_vault)}"})
+    return jsonify({"status": "archived"})
 
-# 📢 Amplify ke platform
+# 📢 Amplify
 @app.route('/api/amplify', methods=['POST'])
 def api_amplify():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     data = request.json
-    platform = data.get('platform')
-    message = data.get('message')
-    record = {
-        "message": message,
-        "platform": platform,
-        "time": datetime.now().isoformat(),
-        "status": "sent"
-    }
-    amplify_history.append(record)
-    print(f"📢 Amplify ke {platform}: {message}")
-    return jsonify({"status": "amplified", "to": platform})
+    print(f"📢 Amplify: {data['message']} ke {data['platform']}")
+    return jsonify({"status": "amplified"})
 
-# 🕵️‍♂️ Intel Feed (disinfo, phishing, dll)
+# 🕵️‍♂️ Intel feed
 @app.route('/api/intel')
 def api_intel():
     if not check_auth():
@@ -209,8 +188,7 @@ def api_deadman_activate():
     global deadman_active
     deadman_active = True
     print("⚰️ DEAD MAN'S SWITCH DIJALANKAN")
-    # Di dunia nyata: sebar semua bukti ke IPFS, Telegram, dll
-    return jsonify({"status": "activated", "message": "Jika tidak aktif 24 jam, semua bukti akan bocor"})
+    return jsonify({"status": "activated"})
 
 @app.route('/api/deadman/status')
 def api_deadman_status():
@@ -218,7 +196,7 @@ def api_deadman_status():
         return "🔐 Akses Ditolak", 403
     return jsonify({"active": deadman_active})
 
-# 📊 Status Global
+# 📊 Status
 @app.route('/api/status')
 def api_status():
     if not check_auth():
@@ -226,12 +204,42 @@ def api_status():
     return jsonify({
         "agents_online": len([a for a in agents if a["online"]]),
         "total_alerts": len(alerts),
-        "sightings": len(sightings),
-        "truth_count": len(truth_vault),
-        "zombie_hunted": len(zombie_domains),
-        "version": "vΩ",
-        "purpose": "Protect the oppressed"
+        "version": "vΩ"
     })
+
+# 🔍 Fungsi pendukung
+def generate_domains(keyword):
+    tlds = ["com", "net", "org", "info", "biz"]
+    prefixes = ["", "www.", "old-", "backup-", "legacy-", "demo-", "free-"]
+    domains = []
+    for p in prefixes:
+        for t in tlds:
+            domains.append(f"{p}{keyword}.{t}")
+    return domains[:50]
+
+def is_domain_expired(domain):
+    try:
+        result = subprocess.run(["whois", domain], capture_output=True, text=True, timeout=5)
+        if "No match" in result.stdout or "NOT FOUND" in result.stdout or "Expired" in result.stdout:
+            return True
+        return False
+    except:
+        return True
+
+def check_subdomain_takeover(subdomain):
+    try:
+        r = requests.get(f"http://{subdomain}", timeout=3)
+        server = r.headers.get('Server', '').lower()
+        if any(s in server for s in ['heroku', 'github', 'aws', 'azure', 'netlify']):
+            return True
+    except:
+        try:
+            result = subprocess.run(["nslookup", subdomain], capture_output=True, text=True)
+            if any(cloud in result.stdout.lower() for cloud in ['heroku', 'github', 's3']):
+                return True
+        except:
+            pass
+    return False
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
