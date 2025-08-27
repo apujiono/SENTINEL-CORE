@@ -31,16 +31,6 @@ class SentinelDB:
             )
         ''')
         self.conn.execute('''
-            CREATE TABLE IF NOT EXISTS truth_vault (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT,
-                category TEXT,
-                ipfs_hash TEXT,
-                uploaded TEXT,
-                metadata TEXT
-            )
-        ''')
-        self.conn.execute('''
             CREATE TABLE IF NOT EXISTS zombie_domains (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 domain TEXT,
