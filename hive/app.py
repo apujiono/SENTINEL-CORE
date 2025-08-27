@@ -5,42 +5,36 @@ import subprocess
 import sqlite3
 from datetime import datetime
 
-# 🔹 Import modul lokal
-from database.database import SentinelDB
-from ai.local_ai import AnomalyDetector, TextClassifier
+# Import lokal
+try:
+    from database.database import SentinelDB
+    from retaliation.retaliation_kit import RetaliationKit
+except:
+    pass
 
 app = Flask(__name__)
 db = SentinelDB()
-ai_detector = AnomalyDetector()
-ai_classifier = TextClassifier()
 
-# 🔐 Autentikasi
 def check_auth():
     token = request.args.get('key') or (request.json.get('key') if request.is_json else None)
     return token == os.getenv('DASH_KEY', 'watcher123')
 
-# 🏠 Dashboard
 @app.route('/')
 def dashboard():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
-    alerts = db.get_alerts(10)
-    sightings = db.get_sightings(5)
-    zombies = db.get_zombies(5)
-    return render_template('dashboard.html', 
-        alerts=alerts, 
-        sightings=sightings, 
-        zombie_results=zombies
+    return render_template('dashboard.html',
+        alerts=db.get_alerts(10),
+        sightings=db.get_sightings(5),
+        zombies=db.get_zombies(5)
     )
 
-# 🌍 Peta
 @app.route('/map')
 def map():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     return render_template('map.html', sightings=db.get_sightings(20))
 
-# 🚨 Terima alert
 @app.route('/alert', methods=['POST'])
 def receive_alert():
     if not check_auth():
@@ -50,7 +44,6 @@ def receive_alert():
     db.add_alert(data)
     return jsonify({"status": "ok"})
 
-# 📍 Sighting
 @app.route('/sighting', methods=['POST'])
 def receive_sighting():
     if not check_auth():
@@ -60,19 +53,17 @@ def receive_sighting():
     db.add_sighting(data)
     return jsonify({"status": "recorded"})
 
-# 🧟 Zombie Scan
 @app.route('/api/zombie/scan', methods=['POST'])
 def scan_zombie():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     keyword = request.json.get('keyword', 'palestine')
     results = []
-
-    domains = [f"{keyword}.com", f"old-{keyword}.net", f"backup-{keyword}.org"]
+    domains = [f"{keyword}.com", f"old-{keyword}.net"]
     for domain in domains:
         try:
             result = subprocess.run(["whois", domain], capture_output=True, text=True, timeout=5)
-            if "No match" in result.stdout or "NOT FOUND" in result.stdout:
+            if "No match" in result.stdout:
                 result_data = {
                     "domain": domain,
                     "status": "expired",
@@ -84,27 +75,31 @@ def scan_zombie():
                 db.add_zombie(result_data)
         except:
             pass
-
     return jsonify(results)
 
-# 🧟 Hasil zombie
 @app.route('/api/zombie/results')
 def get_zombie_results():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     return jsonify(db.get_zombies(50))
 
-# 📊 Status
+@app.route('/api/retaliate', methods=['POST'])
+def api_retaliate():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
+    attacker_ip = request.json.get('ip')
+    if not attacker_ip:
+        return jsonify({"status": "error", "msg": "IP tidak diberikan"})
+    # Di dunia nyata: jalankan RetaliationKit(attacker_ip).execute()
+    return jsonify({"status": "retaliation_started", "target": attacker_ip})
+
 @app.route('/api/status')
 def api_status():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     return jsonify({
         "total_alerts": len(db.get_alerts(1000)),
-        "total_sightings": len(db.get_sightings(1000)),
-        "total_zombies": len(db.get_zombies(1000)),
-        "version": "vΩ",
-        "ai_status": "active"
+        "version": "vΩ"
     })
 
 if __name__ == '__main__':
