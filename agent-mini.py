@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 # 🔧 KONFIGURASI (GANTI INI)
-HIVE_URL = "https://your-sentinel-hive.up.railway.app/alert"  # GANTI DENGAN HIVE-MU
+HIVE_URL = "https://https://sentinel-core-production.up.railway.app/alert"  # GANTI DENGAN HIVE-MU
 AGENT_ID = f"railway-agent-{os.getenv('RAILWAY_RELEASE_ID', 'local')}"  # ID unik
 SCAN_INTERVAL = 10  # Railway sleep setiap 30 detik, jadi jangan terlalu cepat
 
