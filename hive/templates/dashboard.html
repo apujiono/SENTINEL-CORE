@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>👁️‍🗨️ THE OMNISCIENT DASHBOARD</title>
+  <title>⚔️ CYBER WAR COMMAND</title>
   <link rel="stylesheet" href="/static/css/cyber-ui.css" />
   <script src="/static/js/commander.js" defer></script>
 </head>
@@ -19,27 +19,23 @@
       <div id="map"></div>
     </div>
 
-    <div class="panel agent-panel">
-      <h2>🤖 AGENT CONTROL</h2>
-      <select id="agent-select" onchange="loadAgentDetails()">
-        <option value="">Pilih Agent</option>
-      </select>
-      <div id="agent-details"></div>
-      <button onclick="sendCommand('ping')">📡 Ping</button>
-      <button onclick="sendCommand('restart')">🔄 Restart</button>
+    <div class="panel retaliate-panel">
+      <h2>⚔️ CYBER WAR ENGINE</h2>
+      <input type="text" id="target-ip" placeholder="Masukkan IP Musuh" />
+      <button onclick="launchCyberWar()" class="danger">🚀 LEPASKAN SENJATA</button>
+      <div id="war-log"></div>
+    </div>
+
+    <div class="panel intel-panel">
+      <h2>🕵️‍♂️ INTEL FEED</h2>
+      <div id="intel-feed">Menunggu data...</div>
     </div>
 
     <div class="panel zombie-panel">
       <h2>🧟 ZOMBIE HUNTER</h2>
-      <input type="text" id="keyword" placeholder="Cari: palestine, dll" value="palestine" />
-      <button onclick="scanZombie()" class="primary">🔍 SCAN</button>
+      <input type="text" id="keyword" placeholder="Cari: palestine" value="palestine" />
+      <button onclick="scanZombie()">🔍 SCAN</button>
       <div id="zombie-results"></div>
-    </div>
-
-    <div class="panel retaliate-panel">
-      <h2>⚔️ BALAS SERANGAN</h2>
-      <input type="text" id="retaliate-ip" placeholder="IP Penyerang" />
-      <button onclick="retaliate()" class="danger">💥 SERANG BALIK</button>
     </div>
   </div>
 
@@ -47,7 +43,7 @@
   <div id="switch-modal" class="modal">
     <div class="modal-content">
       <h2>🚨 DEAD MAN'S SWITCH</h2>
-      <p>Aktifkan jika kamu berisiko dibungkam.</p>
+      <p>Aktifkan jika kamu dibungkam.</p>
       <button onclick="activateSwitch()" class="danger">💥 AKTIFKAN</button>
       <button onclick="closeModal()">Batal</button>
     </div>
