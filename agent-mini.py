@@ -4,51 +4,51 @@ import requests
 import psutil
 from datetime import datetime
 import os
+from ai.local_ai import AnomalyDetector, TextClassifier
 
-# 🔧 KONFIGURASI (GANTI INI)
-HIVE_URL = "https://https://sentinel-core-production.up.railway.app/alert"  # GANTI DENGAN HIVE-MU
-AGENT_ID = f"railway-agent-{os.getenv('RAILWAY_RELEASE_ID', 'local')}"  # ID unik
-SCAN_INTERVAL = 10  # Railway sleep setiap 30 detik, jadi jangan terlalu cepat
+# 🔧 Konfigurasi
+HIVE_URL = "https://sentinel-core-production.up.railway.app/alert"  # GANTI DENGAN HIVE-MU
+AGENT_ID = f"railway-agent-{os.getenv('RAILWAY_RELEASE_ID', 'local')}"
+SCAN_INTERVAL = 10
+
+# 🔍 AI lokal
+ai_detector = AnomalyDetector()
+ai_classifier = TextClassifier()
 
 def report(alert, level="info"):
     try:
         data = {
             "node": AGENT_ID,
             "alert": alert,
+            "level": level,
             "cpu": psutil.cpu_percent(),
             "ram": psutil.virtual_memory().percent,
-            "timestamp": datetime.now().isoformat(),
-            "platform": "railway"
+            "timestamp": datetime.now().isoformat()
         }
-        # Tambahkan timeout lebih lama
         response = requests.post(HIVE_URL, json=data, timeout=10)
         if response.status_code == 200:
             print(f"🟢 Laporan dikirim: {alert}")
         else:
-            print(f"🟡 Gagal kirim (status {response.status_code}): {response.text}")
-    except requests.exceptions.ConnectionError as e:
-        print(f"🔴 Koneksi gagal: {e}")
-    except requests.exceptions.Timeout as e:
-        print(f"⏰ Timeout: {e}")
+            print(f"🟡 Gagal kirim: {response.status_code}")
     except Exception as e:
-        print(f"❌ Error tak terduga: {e}")
+        print(f"🔴 Error: {e}")
 
-# 🔁 Loop utama
 if __name__ == "__main__":
-    print(f"🤖 Agent aktif: {AGENT_ID} → {HIVE_URL}")
+    print(f"🤖 Agent aktif: {AGENT_ID}")
     while True:
         try:
             cpu = psutil.cpu_percent()
             ram = psutil.virtual_memory().percent
-            
-            # Kirim laporan
+
+            # 🧠 AI: Deteksi anomali
+            anomaly = ai_detector.detect(cpu, ram)
+            if anomaly:
+                report(anomaly, "critical")
+
+            # 📢 Laporan rutin
             report(f"📊 CPU={cpu}%, RAM={ram}%")
-            
-            # Deteksi CPU tinggi
-            if cpu > 80:
-                report(f"🔥 CPU Tinggi: {cpu}%", "warning")
-                
+
         except Exception as e:
-            print(f"⚠️ Error di loop: {e}")
-            
+            print(f"⚠️ Error: {e}")
+
         time.sleep(SCAN_INTERVAL)
