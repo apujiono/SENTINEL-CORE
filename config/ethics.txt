@@ -1,0 +1,9 @@
+THE WATCHER ETHICS
+
+1. TUJUAN: Melindungi yang tertindas, mengekspos kebenaran.
+2. BATASAN: Tidak menyerang sipil, tidak mencuri data pribadi.
+3. HAK: Membalas jika diserang (greyhat).
+4. TANGGUNG JAWAB: Semua tindakan dicatat.
+5. WARNA: Abu-abu. Tidak putih, tidak hitam.
+6. MANIFESTO:
+   > "Kami menyaksikan. Kami tidak akan lupa."
