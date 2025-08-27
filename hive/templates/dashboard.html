@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>The Watcher</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>👁️‍🗨️ The Watcher — Sentinel Core vΩ</h1>
+    <p><b>Alerts:</b> {{ alerts|length }} | <b>Sightings:</b> {{ sightings|length }}</p>
+
+    <h3>🚨 Terkini</h3>
+    <div class="alerts">
+      {% for a in alerts[::-1][:10] %}
+      <div class="alert-item">
+        <b>[{{ a.node }}]</b> {{ a.alert }}
+        <span class="time">{{ a.time }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <h3>📍 Sightings</h3>
+    <div class="sightings">
+      {% for s in sightings[::-1][:5] %}
+      <div class="alert-item">
+        <b>Target:</b> {{ s.target }} di {{ s.location }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <a href="/map?key={{ request.args.get('key') }}">🌍 Buka Peta Ancaman</a>
+  </div>
+</body>
+</html>
