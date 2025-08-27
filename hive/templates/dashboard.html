@@ -5,26 +5,20 @@
   <title>👁️‍🗨️ THE OMNISCIENT DASHBOARD</title>
   <link rel="stylesheet" href="/static/css/cyber-ui.css" />
   <script src="/static/js/commander.js" defer></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
   <div class="grid-bg"></div>
-
-  <!-- Header -->
   <header class="neon-header">
     <h1>SENTINEL CORE vΩ</h1>
     <p>THE WATCHER • <span id="status">ONLINE</span></p>
   </header>
 
-  <!-- Main Grid -->
   <div class="main-grid">
-    <!-- Peta Global -->
     <div class="panel map-panel">
       <h2>🌍 GLOBAL THREAT MAP</h2>
       <div id="map"></div>
     </div>
 
-    <!-- Agent Control -->
     <div class="panel agent-panel">
       <h2>🤖 AGENT CONTROL</h2>
       <select id="agent-select" onchange="loadAgentDetails()">
@@ -33,52 +27,27 @@
       <div id="agent-details"></div>
       <button onclick="sendCommand('ping')">📡 Ping</button>
       <button onclick="sendCommand('restart')">🔄 Restart</button>
-      <button onclick="sendCommand('update')">🆙 Update</button>
-      <button onclick="sendCommand('self-destruct')" class="danger">💀 Self-Destruct</button>
     </div>
 
-    <!-- Zombie Hunter -->
     <div class="panel zombie-panel">
-      <h2>🧟 ZOMBIE HUNTER v2</h2>
-      <input type="text" id="keyword" placeholder="Cari: palestine, korupsi, dll" value="palestine" />
-      <button onclick="scanZombie()" class="primary">🔍 SCAN ZOMBIE DOMAINS</button>
+      <h2>🧟 ZOMBIE HUNTER</h2>
+      <input type="text" id="keyword" placeholder="Cari: palestine, dll" value="palestine" />
+      <button onclick="scanZombie()" class="primary">🔍 SCAN</button>
       <div id="zombie-results"></div>
     </div>
 
-    <!-- Truth Vault -->
-    <div class="panel vault-panel">
-      <h2>📦 TRUTH VAULT</h2>
-      <button onclick="openVault()">🔓 Buka Brankas</button>
-      <ul id="vault-list"></ul>
-    </div>
-
-    <!-- Amplify Engine -->
-    <div class="panel amplify-panel">
-      <h2>📢 AMPLIFY ENGINE</h2>
-      <textarea id="amplify-msg" placeholder="Pesan untuk disebar..."></textarea>
-      <div class="amplify-buttons">
-        <button onclick="amplifyTo('twitter')">🐦 Twitter</button>
-        <button onclick="amplifyTo('telegram')">📱 Telegram</button>
-        <button onclick="amplifyTo('ipfs')">🔗 IPFS</button>
-      </div>
-    </div>
-
-    <!-- Intel Feed -->
-    <div class="panel intel-panel">
-      <h2>🕵️‍♂️ INTEL FEED</h2>
-      <div id="intel-feed">
-        <p>Menunggu data...</p>
-      </div>
+    <div class="panel retaliate-panel">
+      <h2>⚔️ BALAS SERANGAN</h2>
+      <input type="text" id="retaliate-ip" placeholder="IP Penyerang" />
+      <button onclick="retaliate()" class="danger">💥 SERANG BALIK</button>
     </div>
   </div>
 
-  <!-- Dead Man's Switch -->
   <button id="switch-btn" onclick="openModal()">⚰️ Dead Man's Switch</button>
-
   <div id="switch-modal" class="modal">
     <div class="modal-content">
       <h2>🚨 DEAD MAN'S SWITCH</h2>
-      <p>Aktifkan jika kamu berisiko ditangkap atau dibungkam.</p>
+      <p>Aktifkan jika kamu berisiko dibungkam.</p>
       <button onclick="activateSwitch()" class="danger">💥 AKTIFKAN</button>
       <button onclick="closeModal()">Batal</button>
     </div>
