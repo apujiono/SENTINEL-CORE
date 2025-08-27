@@ -5,6 +5,7 @@
   <title>👁️‍🗨️ THE OMNISCIENT DASHBOARD</title>
   <link rel="stylesheet" href="/static/css/cyber-ui.css" />
   <script src="/static/js/commander.js" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
   <div class="grid-bg"></div>
@@ -30,6 +31,7 @@
         <option value="">Pilih Agent</option>
       </select>
       <div id="agent-details"></div>
+      <button onclick="sendCommand('ping')">📡 Ping</button>
       <button onclick="sendCommand('restart')">🔄 Restart</button>
       <button onclick="sendCommand('update')">🆙 Update</button>
       <button onclick="sendCommand('self-destruct')" class="danger">💀 Self-Destruct</button>
@@ -37,9 +39,9 @@
 
     <!-- Zombie Hunter -->
     <div class="panel zombie-panel">
-      <h2>🧟 ZOMBIE HUNTER</h2>
-      <input type="text" id="keyword" placeholder="Cari: palestine, korupsi, dll" />
-      <button onclick="huntZombie()">🔍 Cari Zombie Domain</button>
+      <h2>🧟 ZOMBIE HUNTER v2</h2>
+      <input type="text" id="keyword" placeholder="Cari: palestine, korupsi, dll" value="palestine" />
+      <button onclick="scanZombie()" class="primary">🔍 SCAN ZOMBIE DOMAINS</button>
       <div id="zombie-results"></div>
     </div>
 
@@ -54,9 +56,11 @@
     <div class="panel amplify-panel">
       <h2>📢 AMPLIFY ENGINE</h2>
       <textarea id="amplify-msg" placeholder="Pesan untuk disebar..."></textarea>
-      <button onclick="amplifyTo('twitter')">🐦 Twitter</button>
-      <button onclick="amplifyTo('telegram')">📱 Telegram</button>
-      <button onclick="amplifyTo('ipfs')">🔗 IPFS</button>
+      <div class="amplify-buttons">
+        <button onclick="amplifyTo('twitter')">🐦 Twitter</button>
+        <button onclick="amplifyTo('telegram')">📱 Telegram</button>
+        <button onclick="amplifyTo('ipfs')">🔗 IPFS</button>
+      </div>
     </div>
 
     <!-- Intel Feed -->
@@ -68,7 +72,9 @@
     </div>
   </div>
 
-  <!-- Modal: Dead Man's Switch -->
+  <!-- Dead Man's Switch -->
+  <button id="switch-btn" onclick="openModal()">⚰️ Dead Man's Switch</button>
+
   <div id="switch-modal" class="modal">
     <div class="modal-content">
       <h2>🚨 DEAD MAN'S SWITCH</h2>
@@ -77,8 +83,5 @@
       <button onclick="closeModal()">Batal</button>
     </div>
   </div>
-
-  <!-- Button: Dead Man's Switch -->
-  <button id="switch-btn" onclick="openModal()">⚰️ Dead Man's Switch</button>
 </body>
 </html>
