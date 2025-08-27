@@ -3,50 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <title>⚔️ CYBER WAR COMMAND</title>
-  <link rel="stylesheet" href="/static/css/cyber-ui.css" />
-  <script src="/static/js/commander.js" defer></script>
+  <style>
+    body { font-family: 'Courier New', monospace; background: #000 url('/static/assets/bg-grid.png') repeat; color: #0f0; }
+    .panel { background: rgba(0,30,0,0.7); border: 1px solid #0f0; padding: 15px; border-radius: 8px; }
+    button { background: #001100; color: #0f0; border: 1px solid #0f0; padding: 8px 12px; margin: 5px 0; cursor: pointer; }
+    button.danger { background: #300; border-color: #f00; }
+    input { width: 100%; background: #001100; color: #0f0; border: 1px solid #0f0; padding: 8px; }
+  </style>
+  <script>
+    function launchCyberWar() {
+      const ip = document.getElementById('target-ip').value;
+      if (!ip) { alert("Masukkan IP!"); return; }
+      fetch('/api/retaliate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip: ip, key: 'watcher123' })
+      }).then(() => alert('⚔️ Operasi dimulai!'));
+    }
+  </script>
 </head>
 <body>
-  <div class="grid-bg"></div>
-  <header class="neon-header">
-    <h1>SENTINEL CORE vΩ</h1>
-    <p>THE WATCHER • <span id="status">ONLINE</span></p>
-  </header>
-
-  <div class="main-grid">
-    <div class="panel map-panel">
-      <h2>🌍 GLOBAL THREAT MAP</h2>
-      <div id="map"></div>
-    </div>
-
-    <div class="panel retaliate-panel">
-      <h2>⚔️ CYBER WAR ENGINE</h2>
-      <input type="text" id="target-ip" placeholder="Masukkan IP Musuh" />
-      <button onclick="launchCyberWar()" class="danger">🚀 LEPASKAN SENJATA</button>
-      <div id="war-log"></div>
-    </div>
-
-    <div class="panel intel-panel">
-      <h2>🕵️‍♂️ INTEL FEED</h2>
-      <div id="intel-feed">Menunggu data...</div>
-    </div>
-
-    <div class="panel zombie-panel">
-      <h2>🧟 ZOMBIE HUNTER</h2>
-      <input type="text" id="keyword" placeholder="Cari: palestine" value="palestine" />
-      <button onclick="scanZombie()">🔍 SCAN</button>
-      <div id="zombie-results"></div>
-    </div>
-  </div>
-
-  <button id="switch-btn" onclick="openModal()">⚰️ Dead Man's Switch</button>
-  <div id="switch-modal" class="modal">
-    <div class="modal-content">
-      <h2>🚨 DEAD MAN'S SWITCH</h2>
-      <p>Aktifkan jika kamu dibungkam.</p>
-      <button onclick="activateSwitch()" class="danger">💥 AKTIFKAN</button>
-      <button onclick="closeModal()">Batal</button>
-    </div>
+  <h1>SENTINEL CORE vΩ</h1>
+  <div class="panel">
+    <h2>⚔️ CYBER WAR ENGINE</h2>
+    <input type="text" id="target-ip" placeholder="Masukkan IP Musuh" />
+    <button onclick="launchCyberWar()" class="danger">🚀 LEPASKAN SENJATA</button>
   </div>
 </body>
 </html>
