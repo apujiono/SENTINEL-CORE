@@ -17,34 +17,23 @@ class CyberWarEngine:
         self.evidence.append({
             "phase": "recon",
             "status": "completed",
-            "data": f"Host {self.target} aktif, port 80/443 terbuka"
+            "data": f"Host {self.target} aktif"
         })
         return True
 
     def exploit(self):
         log(f"💥 [EXPLOIT] Mencoba eksploitasi di {self.target} (simulasi)")
-        self.evidence.append({
-            "phase": "exploit",
-            "status": "success",
-            "method": "SQLi & RCE"
-        })
+        self.evidence.append({"phase": "exploit", "status": "success"})
         return True
 
     def deploy_ghost(self):
-        log("🧩 [GHOST] Mengirim Ghost Agent ke target...")
-        self.evidence.append({
-            "phase": "ghost",
-            "status": "deployed",
-            "url": f"http://{self.target}/ghost.php"
-        })
+        log("🧩 [GHOST] Mengirim Ghost Agent...")
+        self.evidence.append({"phase": "ghost", "status": "deployed"})
         log("👻 [GHOST] Agent aktif di sistem musuh")
 
     def sabotage(self):
         log("🧨 [SABOTAGE] Menonaktifkan tools penyerang...")
-        self.evidence.append({
-            "phase": "sabotage",
-            "actions": ["rm /root/tools/*", "chmod 000 /usr/bin/nmap"]
-        })
+        self.evidence.append({"phase": "sabotage", "actions": ["rm /root/tools/*"]})
         log("✅ [SABOTAGE] Tools penyerang dinonaktifkan")
 
     def report_and_erase(self):
@@ -55,9 +44,7 @@ class CyberWarEngine:
             "status": "neutralized"
         }
         try:
-            # Ganti dengan URL hive-mu
-            HIVE_URL = "https://your-sentinel.up.railway.app/evidence"
-            requests.post(HIVE_URL, json=report, timeout=5)
+            requests.post("https://your-hive.up.railway.app/evidence", json=report, timeout=5)
             log("📦 [REPORT] Bukti dikirim ke hive")
         except Exception as e:
             log(f"❌ [REPORT] Gagal kirim: {e}")
