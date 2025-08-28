@@ -2,28 +2,23 @@
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 import os
 from datetime import datetime
+import json
 
-# Import lokal (opsional)
+# Import Zombie Hunter
 try:
-    from ai.sentinel_ai import ThreatAI
     from tools.zombie_scanner import scan_zombie_domains
-    AI_ENABLED = True
-    ai = ThreatAI()
+    ZOMBIE_ENABLED = True
 except:
-    AI_ENABLED = False
+    ZOMBIE_ENABLED = False
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET', 'super-secret-key')
 
 # 🔹 Data global
 alerts = []
-sightings = []
-agents = []
+agents = []  # Daftar agent aktif
 zombie_results = []
-intel_feed = [
-    {"type": "phishing", "message": "bit.ly/free-palestine palsu", "time": "14:25"},
-    {"type": "disinfo", "message": "Hoax: 'Hamas menyerang warga sipil'", "time": "14:20"}
-]
+commands = []  # Perintah untuk agent
 deadman_active = False
 
 # 🔐 Login
@@ -40,6 +35,93 @@ def check_auth():
     token = request.args.get('key') or (request.json.get('key') if request.is_json else None)
     return token == os.getenv('DASH_KEY', 'watcher123')
 
+# 🏠 Dashboard
+@app.route('/')
+@require_login
+def dashboard():
+    return render_template('dashboard.html',
+        alerts=alerts,
+        agents=agents,
+        zombie_results=zombie_results,
+        deadman_active=deadman_active
+    )
+
+# 🚨 Terima alert
+@app.route('/alert', methods=['POST'])
+def receive_alert():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
+    data = request.json
+    data['time'] = datetime.now().strftime("%H:%M:%S")
+    alerts.append(data)
+    return jsonify({"status": "ok"})
+
+# 🤖 Terima pendaftaran agent
+@app.route('/agent', methods=['POST'])
+def register_agent():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
+    data = request.json
+    data['last_seen'] = datetime.now().isoformat()
+    # Update jika sudah ada, tambah jika baru
+    existing = next((a for a in agents if a['id'] == data['id']), None)
+    if existing:
+        existing.update(data)
+    else:
+        agents.append(data)
+    return jsonify({"status": "registered"})
+
+# 🧟 Zombie Hunter
+@app.route('/api/zombie/scan', methods=['POST'])
+@require_login
+def api_scan_zombie():
+    keyword = request.json.get('keyword', 'palestine')
+    results = scan_zombie_domains(keyword)
+    global zombie_results
+    zombie_results = results
+    return jsonify(results)
+
+@app.route('/api/zombie/results')
+@require_login
+def api_zombie_results():
+    return jsonify(zombie_results)
+
+# 🤖 Kirim perintah ke agent
+@app.route('/api/command', methods=['POST'])
+@require_login
+def api_command():
+    data = request.json
+    cmd = data.get('command')
+    agent_id = data.get('agent_id')
+    
+    # Simpan perintah untuk agent
+    commands.append({
+        "agent_id": agent_id,
+        "command": cmd,
+        "status": "pending",
+        "timestamp": datetime.now().isoformat()
+    })
+    
+    print(f"⚙️ Perintah ke {agent_id}: {cmd}")
+    return jsonify({"status": "command_sent", "agent": agent_id, "command": cmd})
+
+# 🤖 Cek perintah untuk agent
+@app.route('/agent/commands', methods=['GET'])
+def get_agent_commands():
+    agent_id = request.args.get('id')
+    if not agent_id:
+        return jsonify([])
+    
+    # Ambil perintah yang pending untuk agent ini
+    pending = [c for c in commands if c['agent_id'] == agent_id and c['status'] == 'pending']
+    
+    # Tandai sebagai dikirim
+    for cmd in pending:
+        cmd['status'] = 'sent'
+    
+    return jsonify(pending)
+
+# 🚪 Login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -54,73 +136,6 @@ def login():
 def logout():
     session.pop('logged_in', None)
     return redirect('/login')
-
-@app.route('/')
-@require_login
-def dashboard():
-    return render_template('dashboard.html',
-        alerts=alerts,
-        sightings=sightings,
-        agents=agents,
-        zombie_results=zombie_results,
-        intel_feed=intel_feed,
-        deadman_active=deadman_active
-    )
-
-@app.route('/alert', methods=['POST'])
-def receive_alert():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
-    data = request.json
-    data['time'] = datetime.now().strftime("%H:%M:%S")
-    alerts.append(data)
-    return jsonify({"status": "ok"})
-
-@app.route('/agent', methods=['POST'])
-def register_agent():
-    data = request.json
-    data['last_seen'] = datetime.now().isoformat()
-    existing = next((a for a in agents if a['id'] == data['id']), None)
-    if existing:
-        existing.update(data)
-    else:
-        agents.append(data)
-    return jsonify({"status": "registered"})
-
-@app.route('/api/agents')
-@require_login
-def api_agents():
-    return jsonify(agents)
-
-@app.route('/api/zombie/scan', methods=['POST'])
-@require_login
-def api_scan_zombie():
-    keyword = request.json.get('keyword', 'palestine')
-    results = scan_zombie_domains(keyword)
-    global zombie_results
-    zombie_results = results
-    return jsonify(results)
-
-@app.route('/api/deadman/activate', methods=['POST'])
-@require_login
-def api_deadman_activate():
-    global deadman_active
-    deadman_active = True
-    return jsonify({"status": "activated"})
-
-@app.route('/api/deadman/status')
-@require_login
-def api_deadman_status():
-    return jsonify({"active": deadman_active})
-
-@app.route('/api/status')
-@require_login
-def api_status():
-    return jsonify({
-        "agents": len(agents),
-        "alerts": len(alerts),
-        "version": "vΩ"
-    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
