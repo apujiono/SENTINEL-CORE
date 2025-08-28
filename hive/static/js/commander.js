@@ -77,6 +77,25 @@ function sendCommand(cmd) {
   }).then(() => alert(`Perintah "${cmd}" dikirim`));
 }
 
+// Tambahkan di commander.js
+function loadAgents() {
+  fetch('/api/agents')
+    .then(r => r.json())
+    .then(data => {
+      const list = document.getElementById('agent-list');
+      list.innerHTML = data.map(a => `
+        <div class="agent-item">
+          <b>[${a.id}]</b> ${a.location} | CPU: ${a.cpu}% | RAM: ${a.ram}%
+          <span class="time">${a.last_seen}</span>
+        </div>
+      `).join('');
+    });
+}
+
+// Panggil setiap 10 detik
+setInterval(loadAgents, 10000);
+window.onload = loadAgents;
+
 function scanZombie() {
   const keyword = document.getElementById('keyword').value || 'palestine';
   const resultsDiv = document.getElementById('zombie-results');
