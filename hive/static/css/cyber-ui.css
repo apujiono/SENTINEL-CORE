@@ -84,15 +84,6 @@ input, textarea {
   margin: 5px 0;
   border-radius: 4px;
 }
-textarea {
-  height: 80px;
-  resize: vertical;
-}
-.amplify-buttons {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
 #map {
   height: 300px;
   background: #000;
