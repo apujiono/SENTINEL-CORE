@@ -1,27 +1,31 @@
 # hive/app.py
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 import os
+import subprocess
 from datetime import datetime
 
+# Import AI & Tools
+try:
+    from ai.sentinel_ai import ThreatAI
+    from tools.zombie_scanner import scan_zombie_domains
+    AI_ENABLED = True
+    ai = ThreatAI()
+except Exception as e:
+    print(f"⚠️ AI gagal dimuat: {e}")
+    AI_ENABLED = False
+
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET', 'super-secret-key')  # Ganti di production
+app.secret_key = os.getenv('FLASK_SECRET', 'super-secret-key')
 
 # 🔹 Data global
 alerts = []
 sightings = []
-agents = [
-    {"id": "agent-jkt-01", "ip": "192.168.1.10", "location": "Jakarta", "online": True, "dsi": 92, "role": "scanner"},
-    {"id": "agent-gz-01", "ip": "45.123.7.1", "location": "Gaza", "online": True, "dsi": 78, "role": "whistleblower"}
-]
-truth_vault = []
+agents = []
 zombie_results = []
-intel_feed = [
-    {"type": "phishing", "message": "Deteksi: bit.ly/free-palestine palsu", "time": "14:25"},
-    {"type": "disinfo", "message": "Hoax: 'Hamas menyerang warga sipil'", "time": "14:20"}
-]
+intel_feed = []
 deadman_active = False
 
-# 🔐 Cek login
+# 🔐 Login
 def require_login(f):
     from functools import wraps
     @wraps(f)
@@ -31,13 +35,8 @@ def require_login(f):
         return f(*args, **kwargs)
     return decorated
 
-# 🔐 Cek auth untuk API
 def check_auth():
-    token = (
-        request.args.get('key') or
-        (request.json.get('key') if request.is_json else None) or
-        (request.json.get('token') if request.is_json else None)
-    )
+    token = request.args.get('key') or (request.json.get('key') if request.is_json else None)
     return token == os.getenv('DASH_KEY', 'watcher123')
 
 # 🔐 Login Page
@@ -64,26 +63,31 @@ def dashboard():
         alerts=alerts,
         sightings=sightings,
         agents=agents,
-        truth_vault=truth_vault,
         zombie_results=zombie_results,
-        deadman_active=deadman_active
+        intel_feed=intel_feed,
+        ai_enabled=AI_ENABLED
     )
 
-# 🌍 Peta
-@app.route('/map')
-@require_login
-def map():
-    return render_template('map.html', sightings=sightings)
-
-# 🚨 Terima alert (POST)
+# 🚨 Terima alert
 @app.route('/alert', methods=['POST'])
 def receive_alert():
     if not check_auth():
         return "🔐 Akses Ditolak", 403
     data = request.json
     data['time'] = datetime.now().strftime("%H:%M:%S")
+    
+    # 🔍 AI: Deteksi anomali
+    if AI_ENABLED:
+        anomaly = ai.detect_anomaly(data.get('cpu', 0), data.get('ram', 0))
+        if anomaly:
+            alerts.append({
+                "node": "AI",
+                "alert": anomaly,
+                "time": data['time'],
+                "level": "critical"
+            })
+
     alerts.append(data)
-    print(f"🚨 ALERT: {data}")
     return jsonify({"status": "ok"})
 
 # 📍 Sighting
@@ -94,101 +98,40 @@ def receive_sighting():
     data = request.json
     data['time'] = datetime.now().isoformat()
     sightings.append(data)
-    print(f"📌 SIGHTING: {data}")
     return jsonify({"status": "recorded"})
 
-# 🤖 Daftar agent
-@app.route('/api/agents')
-@require_login
-def api_agents():
-    return jsonify(agents)
-
-# 🧠 Kirim perintah ke agent
-@app.route('/api/command', methods=['POST'])
-@require_login
-def api_command():
+# 🤖 Agent report
+@app.route('/agent', methods=['POST'])
+def register_agent():
     data = request.json
-    cmd = data.get('command')
-    agent_id = data.get('agent_id')
-    print(f"⚙️ Perintah ke {agent_id}: {cmd}")
-    return jsonify({"status": "command_sent", "agent": agent_id, "command": cmd})
+    data['last_seen'] = datetime.now().isoformat()
+    # Update jika sudah ada, tambah jika baru
+    existing = next((a for a in agents if a['id'] == data['id']), None)
+    if existing:
+        existing.update(data)
+    else:
+        agents.append(data)
+    return jsonify({"status": "registered"})
 
-# 🧟 Cari zombie domain
+# 🧟 Zombie Hunter (REAL)
 @app.route('/api/zombie/scan', methods=['POST'])
-@require_login
-def scan_zombie():
+def api_scan_zombie():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
     keyword = request.json.get('keyword', 'palestine')
-    results = []
-
-    domains = [f"old-{keyword}.com", f"backup-{keyword}.net"]
-    for domain in domains:
-        results.append({
-            "domain": domain,
-            "status": "expired",
-            "risk": "high",
-            "action": "register_or_takeover"
-        })
-
+    results = scan_zombie_domains(keyword)
     global zombie_results
     zombie_results = results
     return jsonify(results)
 
-# 🧟 Hasil zombie
-@app.route('/api/zombie/results')
-@require_login
-def get_zombie_results():
-    return jsonify(zombie_results)
-
-# 📦 Simpan bukti
-@app.route('/api/truth', methods=['POST'])
-@require_login
-def api_truth():
-    data = request.json
-    data['uploaded'] = datetime.now().isoformat()
-    truth_vault.append(data)
-    print(f"✅ Bukti disimpan: {data.get('title')}")
-    return jsonify({"status": "archived"})
-
-# 📢 Amplify
-@app.route('/api/amplify', methods=['POST'])
-@require_login
-def api_amplify():
-    data = request.json
-    platform = data.get('platform')
-    message = data.get('message')
-    print(f"📢 Amplify ke {platform}: {message}")
-    return jsonify({"status": "amplified", "to": platform})
-
-# 🕵️‍♂️ Intel Feed
-@app.route('/api/intel')
-@require_login
-def api_intel():
-    return jsonify(intel_feed)
-
-# ⚰️ Dead Man's Switch
-@app.route('/api/deadman/activate', methods=['POST'])
-@require_login
-def api_deadman_activate():
-    global deadman_active
-    deadman_active = True
-    print("⚰️ DEAD MAN'S SWITCH DIJALANKAN")
-    return jsonify({"status": "activated"})
-
-@app.route('/api/deadman/status')
-@require_login
-def api_deadman_status():
-    return jsonify({"active": deadman_active})
-
-# 📊 Status Global
+# 📊 Status
 @app.route('/api/status')
 @require_login
 def api_status():
     return jsonify({
-        "agents_online": len([a for a in agents if a["online"]]),
-        "total_alerts": len(alerts),
-        "sightings": len(sightings),
-        "version": "vΩ",
-        "purpose": "Protect the oppressed"
+        "agents": len(agents),
+        "alerts": len(alerts),
+        "version": "vΩ"
     })
 
 if __name__ == '__main__':
