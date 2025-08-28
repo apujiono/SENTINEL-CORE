@@ -11,82 +11,47 @@
 </head>
 <body>
   <div class="grid-bg"></div>
-
-  <!-- Header -->
   <header class="neon-header">
     <h1>SENTINEL CORE vΩ</h1>
     <p>THE WATCHER • <span id="status">ONLINE</span></p>
+    <div class="heartbeat" id="heartbeat">❤️</div>
   </header>
-
-  <!-- Main Grid -->
   <div class="main-grid">
-    <!-- Peta Global -->
     <div class="panel map-panel">
       <h2>🌍 GLOBAL THREAT MAP</h2>
       <div id="map"></div>
     </div>
-
-    <!-- Agent Control -->
     <div class="panel agent-panel">
       <h2>🤖 AGENT NETWORK</h2>
-      <select id="agent-select" onchange="loadAgentDetails()">
-        <option value="">Pilih Agent</option>
-      </select>
+      <select id="agent-select" onchange="loadAgentDetails()"><option value="">Pilih Agent</option></select>
       <div id="agent-details"></div>
       <div id="agent-list"></div>
       <button onclick="sendCommand('ping')">📡 Ping</button>
       <button onclick="sendCommand('restart')">🔄 Restart</button>
       <button onclick="sendCommand('self-destruct')" class="danger">💀 Self-Destruct</button>
     </div>
-
-    <!-- Zombie Hunter -->
     <div class="panel zombie-panel">
       <h2>🧟 ZOMBIE HUNTER (REAL)</h2>
-      <input type="text" id="keyword" placeholder="Cari: palestine, korupsi" value="palestine" />
+      <input type="text" id="keyword" placeholder="Cari: palestine" value="palestine" />
       <button onclick="scanZombie()" class="primary">🔍 SCAN REAL DOMAINS</button>
       <div id="zombie-results"></div>
     </div>
-
-    <!-- AI Threat Center -->
-    <div class="panel ai-panel">
-      <h2>🧠 THREAT AI ENGINE</h2>
-      <div id="ai-status">AI: Aktif</div>
-      <div id="ai-predictions"></div>
-      <button onclick="activateAIScan()">🔄 Scan Jaringan</button>
-    </div>
-
-    <!-- Truth Vault -->
-    <div class="panel vault-panel">
-      <h2>📦 TRUTH VAULT</h2>
-      <button onclick="openVault()">🔓 Buka Brankas</button>
-      <ul id="vault-list"></ul>
-    </div>
-
-    <!-- Retaliation Engine -->
     <div class="panel retaliate-panel">
-      <h2>⚔️ BALAS SERANGAN (GREYHAT)</h2>
+      <h2>⚔️ BALAS SERANGAN</h2>
       <input type="text" id="retaliate-ip" placeholder="IP Penyerang" />
       <button onclick="retaliate()" class="danger">💥 SERANG BALIK</button>
       <div id="war-log"></div>
     </div>
-
-    <!-- Intel Feed -->
     <div class="panel intel-panel">
       <h2>🕵️‍♂️ INTEL FEED</h2>
-      <div id="intel-feed">
-        <p>Menunggu data...</p>
-      </div>
+      <div id="intel-feed"><p>Menunggu data...</p></div>
     </div>
-
-    <!-- Dead Man's Switch -->
     <div class="panel switch-panel">
       <h2>⚰️ DEAD MAN'S SWITCH</h2>
       <p>Aktifkan jika kamu berisiko dibungkam.</p>
       <button onclick="activateSwitch()" class="danger">💥 AKTIFKAN</button>
     </div>
   </div>
-
-  <!-- Modal: Dead Man's Switch -->
   <div id="switch-modal" class="modal">
     <div class="modal-content">
       <h2>🚨 DEAD MAN'S SWITCH</h2>
