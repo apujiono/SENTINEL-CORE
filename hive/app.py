@@ -1,9 +1,10 @@
 # hive/app.py
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 import os
 from datetime import datetime
 
 app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET', 'super-secret-key')  # Ganti di production
 
 # 🔹 Data global
 alerts = []
@@ -20,7 +21,17 @@ intel_feed = [
 ]
 deadman_active = False
 
-# 🔐 Autentikasi
+# 🔐 Cek login
+def require_login(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect('/login')
+        return f(*args, **kwargs)
+    return decorated
+
+# 🔐 Cek auth untuk API
 def check_auth():
     token = (
         request.args.get('key') or
@@ -29,11 +40,26 @@ def check_auth():
     )
     return token == os.getenv('DASH_KEY', 'watcher123')
 
+# 🔐 Login Page
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        if request.form['password'] == os.getenv('DASH_KEY', 'watcher123'):
+            session['logged_in'] = True
+            return redirect('/')
+        else:
+            return "❌ Password salah", 403
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect('/login')
+
 # 🏠 Dashboard
 @app.route('/')
+@require_login
 def dashboard():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     return render_template('dashboard.html',
         alerts=alerts,
         sightings=sightings,
@@ -45,24 +71,11 @@ def dashboard():
 
 # 🌍 Peta
 @app.route('/map')
+@require_login
 def map():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     return render_template('map.html', sightings=sightings)
 
-# 🚨 Terima alert (POST) — FIX: Tambahkan GET untuk info
-@app.route('/alert', methods=['GET'])
-def alert_info():
-    return """
-    <h1>👁️ /alert Endpoint</h1>
-    <p>Gunakan <b>POST</b> untuk kirim data dari agent.</p>
-    <pre>
-curl -X POST "https://sentinel-core-production.up.railway.app/alert?key=watcher123" \\
--H "Content-Type: application/json" \\
--d '{"node":"agent-01","alert":"CPU Tinggi","cpu":90,"ram":80}'
-    </pre>
-    """, 200
-
+# 🚨 Terima alert (POST)
 @app.route('/alert', methods=['POST'])
 def receive_alert():
     if not check_auth():
@@ -86,16 +99,14 @@ def receive_sighting():
 
 # 🤖 Daftar agent
 @app.route('/api/agents')
+@require_login
 def api_agents():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     return jsonify(agents)
 
 # 🧠 Kirim perintah ke agent
 @app.route('/api/command', methods=['POST'])
+@require_login
 def api_command():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     data = request.json
     cmd = data.get('command')
     agent_id = data.get('agent_id')
@@ -104,13 +115,11 @@ def api_command():
 
 # 🧟 Cari zombie domain
 @app.route('/api/zombie/scan', methods=['POST'])
+@require_login
 def scan_zombie():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     keyword = request.json.get('keyword', 'palestine')
     results = []
 
-    # Simulasi hasil
     domains = [f"old-{keyword}.com", f"backup-{keyword}.net"]
     for domain in domains:
         results.append({
@@ -126,16 +135,14 @@ def scan_zombie():
 
 # 🧟 Hasil zombie
 @app.route('/api/zombie/results')
+@require_login
 def get_zombie_results():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     return jsonify(zombie_results)
 
 # 📦 Simpan bukti
 @app.route('/api/truth', methods=['POST'])
+@require_login
 def api_truth():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     data = request.json
     data['uploaded'] = datetime.now().isoformat()
     truth_vault.append(data)
@@ -144,9 +151,8 @@ def api_truth():
 
 # 📢 Amplify
 @app.route('/api/amplify', methods=['POST'])
+@require_login
 def api_amplify():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     data = request.json
     platform = data.get('platform')
     message = data.get('message')
@@ -155,32 +161,28 @@ def api_amplify():
 
 # 🕵️‍♂️ Intel Feed
 @app.route('/api/intel')
+@require_login
 def api_intel():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     return jsonify(intel_feed)
 
 # ⚰️ Dead Man's Switch
 @app.route('/api/deadman/activate', methods=['POST'])
+@require_login
 def api_deadman_activate():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     global deadman_active
     deadman_active = True
     print("⚰️ DEAD MAN'S SWITCH DIJALANKAN")
-    return jsonify({"status": "activated", "message": "Jika tidak aktif 24 jam, semua bukti akan bocor"})
+    return jsonify({"status": "activated"})
 
 @app.route('/api/deadman/status')
+@require_login
 def api_deadman_status():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     return jsonify({"active": deadman_active})
 
 # 📊 Status Global
 @app.route('/api/status')
+@require_login
 def api_status():
-    if not check_auth():
-        return "🔐 Akses Ditolak", 403
     return jsonify({
         "agents_online": len([a for a in agents if a["online"]]),
         "total_alerts": len(alerts),
