@@ -1,0 +1,6 @@
+{
+  "node_id": "sentinel-jkt-01",
+  "role": "scanner",
+  "hive_url": "https://sentinel-core-production.up.railway.app/alert",
+  "scan_interval": 5
+}
