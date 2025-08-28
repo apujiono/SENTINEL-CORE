@@ -57,7 +57,7 @@ def alert_info():
     <h1>👁️ /alert Endpoint</h1>
     <p>Gunakan <b>POST</b> untuk kirim data dari agent.</p>
     <pre>
-curl -X POST "https://your-sentinel.up.railway.app/alert?key=watcher123" \\
+curl -X POST "https://sentinel-core-production.up.railway.app/alert?key=watcher123" \\
 -H "Content-Type: application/json" \\
 -d '{"node":"agent-01","alert":"CPU Tinggi","cpu":90,"ram":80}'
     </pre>
@@ -156,3 +156,39 @@ def api_amplify():
 # 🕵️‍♂️ Intel Feed
 @app.route('/api/intel')
 def api_intel():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
+    return jsonify(intel_feed)
+
+# ⚰️ Dead Man's Switch
+@app.route('/api/deadman/activate', methods=['POST'])
+def api_deadman_activate():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
+    global deadman_active
+    deadman_active = True
+    print("⚰️ DEAD MAN'S SWITCH DIJALANKAN")
+    return jsonify({"status": "activated", "message": "Jika tidak aktif 24 jam, semua bukti akan bocor"})
+
+@app.route('/api/deadman/status')
+def api_deadman_status():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
+    return jsonify({"active": deadman_active})
+
+# 📊 Status Global
+@app.route('/api/status')
+def api_status():
+    if not check_auth():
+        return "🔐 Akses Ditolak", 403
+    return jsonify({
+        "agents_online": len([a for a in agents if a["online"]]),
+        "total_alerts": len(alerts),
+        "sightings": len(sightings),
+        "version": "vΩ",
+        "purpose": "Protect the oppressed"
+    })
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
