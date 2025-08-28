@@ -3,65 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>👁️ THE OMNISCIENT DASHBOARD</title>
-  <link rel="stylesheet" href="/static/css/cyber-ui.css" />
+  <title>👁️ THE OMNISCIENT NETWORK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/neon-ui.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="/static/js/commander.js" defer></script>
 </head>
 <body>
+  <div class="quantum-particles" id="particles"></div>
   <div class="grid-bg"></div>
+
   <header class="neon-header">
-    <h1>SENTINEL CORE vΩ</h1>
-    <p>THE WATCHER • <span id="status">ONLINE</span></p>
+    <h1>SENTINEL OMEGA NETWORK</h1>
+    <p>THE OMNISCIENT • <span id="status">ONLINE</span></p>
     <div class="heartbeat" id="heartbeat">❤️</div>
   </header>
+
   <div class="main-grid">
-    <div class="panel map-panel">
-      <h2>🌍 GLOBAL THREAT MAP</h2>
+    <!-- Peta Global -->
+    <div class="panel hologram map-panel">
+      <h2>🌐 GLOBAL THREAT GLOBE</h2>
       <div id="map"></div>
     </div>
+
+    <!-- Agent Control -->
     <div class="panel agent-panel">
-      <h2>🤖 AGENT NETWORK</h2>
-      <select id="agent-select" onchange="loadAgentDetails()"><option value="">Pilih Agent</option></select>
+      <h2>⚛️ QUANTUM AGENT NETWORK</h2>
+      <select id="agent-select" onchange="loadAgentDetails()">
+        <option value="">Pilih Agent</option>
+      </select>
       <div id="agent-details"></div>
       <div id="agent-list"></div>
-      <button onclick="sendCommand('ping')">📡 Ping</button>
-      <button onclick="sendCommand('restart')">🔄 Restart</button>
-      <button onclick="sendCommand('self-destruct')" class="danger">💀 Self-Destruct</button>
+      <div class="agent-controls">
+        <button onclick="sendCommand('ping')">📡 Ping</button>
+        <button onclick="sendCommand('restart')">🔄 Restart</button>
+        <button onclick="sendCommand('self-destruct')" class="danger">💀 Self-Destruct</button>
+      </div>
     </div>
-<div class="panel agent-panel">
-  <h2>🤖 AGENT NETWORK</h2>
-  <div id="agent-list">
-    <p>Menunggu agent...</p>
-  </div>
-</div>
+
+    <!-- Zombie Hunter -->
     <div class="panel zombie-panel">
-      <h2>🧟 ZOMBIE HUNTER (REAL)</h2>
-      <input type="text" id="keyword" placeholder="Cari: palestine" value="palestine" />
+      <h2>🧟 ZOMBIE HUNTER</h2>
+      <input type="text" id="keyword" placeholder="Cari: palestine, korupsi" value="palestine" />
       <button onclick="scanZombie()" class="primary">🔍 SCAN REAL DOMAINS</button>
       <div id="zombie-results"></div>
     </div>
+
+    <!-- Retaliation Engine -->
     <div class="panel retaliate-panel">
-      <h2>⚔️ BALAS SERANGAN</h2>
-      <input type="text" id="retaliate-ip" placeholder="IP Penyerang" />
-      <button onclick="retaliate()" class="danger">💥 SERANG BALIK</button>
+      <h2>⚛️ QUANTUM RETALIATION ENGINE</h2>
+      <input type="text" id="retaliate-ip" placeholder="Target IP/Domain" />
+      <div class="quantum-controls">
+        <button onclick="retaliate('standard')" class="primary">⚡ STANDARD ATTACK</button>
+        <button onclick="retaliate('quantum')" class="danger">🌀 QUANTUM STRIKE</button>
+      </div>
       <div id="war-log"></div>
     </div>
+
+    <!-- Intel Feed -->
     <div class="panel intel-panel">
-      <h2>🕵️‍♂️ INTEL FEED</h2>
-      <div id="intel-feed"><p>Menunggu data...</p></div>
+      <h2>🧠 INTELLIGENCE HUB</h2>
+      <div id="intel-feed">
+        <p>Menunggu intel...</p>
+      </div>
+      <button onclick="activateAIScan()" class="primary">🔍 QUANTUM SCAN</button>
     </div>
+
+    <!-- Dead Man's Switch -->
     <div class="panel switch-panel">
       <h2>⚰️ DEAD MAN'S SWITCH</h2>
       <p>Aktifkan jika kamu berisiko dibungkam.</p>
       <button onclick="activateSwitch()" class="danger">💥 AKTIFKAN</button>
     </div>
   </div>
+
+  <!-- Modal: Dead Man's Switch -->
   <div id="switch-modal" class="modal">
     <div class="modal-content">
       <h2>🚨 DEAD MAN'S SWITCH</h2>
-      <p>Aktifkan? Jika kamu tidak aktif 24 jam, semua bukti akan bocor otomatis.</p>
+      <p>Aktifkan? Jika kamu tidak aktif 24 jam, semua bukti akan bocor otomatis ke jaringan quantum.</p>
       <button onclick="confirmSwitch()" class="danger">✅ YA, AKTIFKAN</button>
       <button onclick="closeModal()">Batal</button>
     </div>
